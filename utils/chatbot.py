@@ -11,7 +11,14 @@ from operator import itemgetter
 from sqlalchemy import create_engine
 from langchain_community.agent_toolkits import create_sql_agent
 import langchain
+from langchain_community.agent_toolkits import SQLDatabaseToolkit
+from langchain_core.messages import SystemMessage
+from langchain_groq import ChatGroq
+from langchain_core.messages import HumanMessage
+from langgraph.prebuilt import create_react_agent
 langchain.debug = True
+
+os.environ["GROQ_API_KEY"]= "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"
 
 APPCFG = LoadConfig()
 
@@ -62,7 +69,40 @@ class ChatBot:
                         return "", chatbot, None
                 print(db.dialect)
                 print(db.get_usable_table_names())
+                toolkit = SQLDatabaseToolkit(db=db, llm=APPCFG.langchain_llm)
+
+                tools = toolkit.get_tools()
+                SQL_PREFIX = """You are an agent designed to interact with a SQL database.
+                Given an input question, create a syntactically correct SQLite query to run, then look at the results of the query and return the answer.
+                Unless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 5 results.
+                You can order the results by a relevant column to return the most interesting examples in the database.
+                Never query for all the columns from a specific table, only ask for the relevant columns given the question.
+                You have access to tools for interacting with the database.
+                Only use the below tools. Only use the information returned by the below tools to construct your final answer.
+                You MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.
+
+                DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.
+
+                To start you should ALWAYS look at the tables in the database to see what you can query.
+                Do NOT skip this step.
+                Then you should query the schema of the most relevant tables."""
+
+                llm = ChatGroq(model="llama3-8b-8192")
+                system_message = SystemMessage(content=SQL_PREFIX)
+                agent_executor = create_react_agent(llm, tools, messages_modifier=system_message)
+
+                
+                for s in agent_executor.stream({"messages": HumanMessage(content=message)}):
+                    response = s
+
+                response = response["agent"]["messages"][0].content
 
 
             elif chat_type == "RAG with stored CSV/XLSX ChromaDB":
+                pass
+            chatbot.append(
+                (message, response))
+            return "", chatbot
+        else:
+            pass
                 
