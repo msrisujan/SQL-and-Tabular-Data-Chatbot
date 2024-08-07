@@ -18,7 +18,7 @@ from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 langchain.debug = True
 
-os.environ["GROQ_API_KEY"]= "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"
+os.environ["GROQ_API_KEY"]= ""
 
 APPCFG = LoadConfig()
 
