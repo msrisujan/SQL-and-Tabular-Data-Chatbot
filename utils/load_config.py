@@ -8,7 +8,7 @@ import chromadb
 from langchain_huggingface import HuggingFaceEndpoint
 # print("Environment variables are loaded:", load_dotenv())
 
-os.environ["HUGGINGFACEHUB_API_TOKEN"]="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"
+os.environ["HUGGINGFACEHUB_API_TOKEN"]=""
 
 
 class LoadConfig:
